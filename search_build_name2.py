@@ -14,7 +14,6 @@ from selenium import webdriver as wb
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -40,19 +39,34 @@ class kakao_map():
         self.__openweb()
         return self
     
-    def __inputclear(self):
-        search_box = self.browser.find_element(By.ID, "search.keyword.query")
-        while search_box.get_attribute("value"):
-            search_box.clear()
-            time.sleep(0.3)
-     
+    def __inputclear(self, search_box):
+        search_box.clear()
+        search_box.clear()
+        search_box.clear()
+        search_box.clear()
+        WebDriverWait(self.browser, DELAY_TIME).until(
+        EC.text_to_be_present_in_element_value((By.ID, "search.keyword.query"), "") )
+        
+    def __stayLoad(self):
+        while(True):
+            try:
+                addr = self.browser.find_element(By.CLASS_NAME, "link_addr")
+            except:
+                continue
+            else:
+                return
+   
     def __search(self, address):
         search_box = self.browser.find_element(By.ID, "search.keyword.query")
-        self.__inputclear()
+        
+        while search_box.get_attribute("value"):
+            self.__inputclear(search_box)
+        
         search_box.send_keys(address)
         search_box.send_keys(Keys.RETURN)
-        time.sleep(0.3)
-    
+        
+        self.__stayLoad()
+
     def find_name(self, addr, road_addr):
         if "산" in addr:
             return "산"
@@ -75,12 +89,11 @@ class kakao_map():
     
     def __exit__(self, exc_type, exc_value, traceback):
         self.browser.quit()
-        
-
+    
 def search_to_csv(data, file_path, mode="no"):
     with kakao_map(mode) as browser:
         for i in range(len(data.index)):
-            print(file_path[16:16+4], i)
             data.iloc[i, 4] = browser.find_name(data.iloc[i, 2], data.iloc[i, 3])
+            print(file_path[16:16+3], i)
     data.to_csv(file_path, index=False, encoding=encoding)
 
